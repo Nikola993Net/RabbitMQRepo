@@ -1,6 +1,7 @@
 ﻿using System;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using System.Collections.Generic;
 
 namespace BackOffice
 {
@@ -14,13 +15,24 @@ namespace BackOffice
             var channel = connection.CreateModel();
 
             channel.QueueDeclare("backOfficeQueue", true, false, false);
-            channel.QueueBind("backOfficeQueue", "webappExchange", "tour.*");
+            var headers = new Dictionary<string, object>
+            {
+                { "subject", "tour" },
+                { "action", "booked" },
+                { "x-match", "any" }
+            };
+
+            channel.QueueBind("backOfficeQueue", "webappExchange", "", headers);
 
             var consumer = new EventingBasicConsumer(channel);
             consumer.Received += (sender, eventArgs) =>
             {
                 var msg = System.Text.Encoding.UTF8.GetString(eventArgs.Body);
-                Console.WriteLine($"{eventArgs.RoutingKey} : {msg}");
+
+                var subject = System.Text.Encoding.UTF8.GetString(eventArgs.BasicProperties.Headers["subject"] as byte[]);
+                var action = System.Text.Encoding.UTF8.GetString(eventArgs.BasicProperties.Headers["action"] as byte[]);
+
+                Console.WriteLine($"{subject} {action} : {msg}");
             };
 
             channel.BasicConsume("backOfficeQueue", true, consumer);
