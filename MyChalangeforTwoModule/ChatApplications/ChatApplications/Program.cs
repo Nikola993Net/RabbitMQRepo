@@ -8,6 +8,9 @@ namespace ChatApplications
     {
         static void Main(string[] args)
         {
+            Console.WriteLine("Pleas enter a username: ");
+            var user = Console.ReadLine();
+
             Console.WriteLine("Please specify a chat room name:");
             var roomName = Console.ReadLine();
 
@@ -17,7 +20,7 @@ namespace ChatApplications
             var queueName = Guid.NewGuid().ToString();
 
             var factory = new ConnectionFactory();
-            factory.Uri = new Uri("amqp://guest:guest@localhost:5672");
+            factory.Uri = new Uri($"amqp://{user}:{user}@localhost:5672");
 
             var connection = factory.CreateConnection();
             var channel = connection.CreateModel();
@@ -31,7 +34,8 @@ namespace ChatApplications
             consumer.Received += (sender, eventArgs) =>
             {
                 var msg = System.Text.Encoding.UTF8.GetString(eventArgs.Body);
-                Console.WriteLine($"{msg}");
+                var userId = eventArgs.BasicProperties.UserId;
+                Console.WriteLine($"{userId} -> {msg}");
             };
 
             channel.BasicConsume(queueName, true, consumer);
@@ -41,7 +45,9 @@ namespace ChatApplications
             while (message != "")
             {
                 var bytes = System.Text.Encoding.UTF8.GetBytes(message);
-                channel.BasicPublish(exchangeName, roomName, null, bytes);
+                var props = channel.CreateBasicProperties();
+                props.UserId = user;
+                channel.BasicPublish(exchangeName, roomName, props, bytes);
                 message = Console.ReadLine();
             }
 
