@@ -10,7 +10,7 @@ namespace ExploreCalifornia.EmailService
         static void Main(string[] args)
         {
             var factory = new ConnectionFactory();
-            factory.Uri = new Uri("amqp://guest:guest@localhost:5672");
+            factory.Uri = new Uri("amqp://emailservice:emailservice@localhost:5672");
             var connection = factory.CreateConnection();
             var channel = connection.CreateModel();
 

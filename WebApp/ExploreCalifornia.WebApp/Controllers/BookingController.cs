@@ -83,7 +83,7 @@ namespace ExploreCalifornia.WebApp.Controllers
             , string message)
         {
             var factory = new ConnectionFactory();
-            factory.Uri = new Uri("amqp://guest:guest@localhost:5672");
+            factory.Uri = new Uri("amqp://webapp:webapp@localhost:5672");
 
             var connection = factory.CreateConnection();
             var channel = connection.CreateModel();
@@ -96,6 +96,7 @@ namespace ExploreCalifornia.WebApp.Controllers
             var bytes = System.Text.Encoding.UTF8.GetBytes(message);
             var props = new BasicProperties ();
             props.Headers = headers;
+            props.UserId = "webapp";
             channel.BasicPublish("webappExchange", "", props, bytes);
 
             channel.Close();
